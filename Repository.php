@@ -1,8 +1,6 @@
 <?php
 namespace Git;
 
-
-
 const forceUTF8 = true;
 
 class Repository {
