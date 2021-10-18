@@ -1,5 +1,5 @@
 <?php
-namespace Git;
+namespace Chrissileinus\React\Git;
 
 class diff {
   static string $regex = '/^^diff --git \S(?<fileA>.+) \S(?<fileB>.+)\n(?:|(?:(?<type>\S+) .*\n))index (?<blobA>\S+)\.\.(?<blobB>\S+)(?: \S+|)\n(?:.+\n.+\n(?<parts>(?:[@ +-].*\n)+)|)/m';

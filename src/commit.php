@@ -1,5 +1,5 @@
 <?php
-namespace Git;
+namespace Chrissileinus\React\Git;
 
 class commit {
   static string $regex = '/^commit +(?<hash>.+)\nAuthor: +(?<authorName>.+) <(?<authorEmail>.*)>\nAuthorDate: +(?<authorDate>.+)\nCommit: +(?<commitName>.+) <(?<commitEmail>.*)>\nCommitDate: +(?<commitDate>.+)\n\n(?<comment>(?:.+\n)+)/m';

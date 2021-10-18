@@ -1,0 +1,20 @@
+{
+    "name": "chrissileinus/reactphp-git",
+    "description": "a Git Wrapper for reactPHP",
+    "type": "library",
+    "require": {
+        "react/child-process": "^0.6.4",
+        "react/react": "^1.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Chrissileinus\\React\\Git\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Christian Backus",
+            "email": "chrissileinus@googlemail.com"
+        }
+    ]
+}

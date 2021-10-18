@@ -1,5 +1,5 @@
 <?php
-namespace Git;
+namespace Chrissileinus\React\Git;
 
 const forceUTF8 = true;
 
@@ -9,25 +9,19 @@ class Repository {
   /**
    * Open or Init repo in directory if it not exist
    * @param  string $repository
-   * @param  string[]|NULL $initParams
+   * @param  string[]|null $initParams
    * @throws Exception
    */
-  public function __construct (string $repository, array $initParams = NULL) {
+  public function __construct (string $repository, array $initParams = null) {
     if (basename($repository) === '.git') {
       $repository = dirname($repository);
     }
 
-    $path = realpath($repository);
-
-    if ($path === FALSE) {
-      throw new Exception("Repository '{$repository}' not found.");
-    }
-
-    $repository = $path;
-
-    if (!is_dir($repository) && !@mkdir($repository, 0777, TRUE)) {
+    if (($noDir = !is_dir($repository)) && !@mkdir($repository, 0777, true)) {
       throw new Exception("Unable to create directory '{$repository}'.");
     }
+
+    if ($noDir) user_error("Repository directory created '{$repository}'.");
 
     $this->repository = $repository;
 
@@ -78,7 +72,7 @@ class Repository {
    * @return \React\Promise\PromiseInterface
    * @throws Exception
    */
-  public function commit (string $message, $params = NULL) {
+  public function commit (string $message, $params = null) {
     return $this->run('commit', $params, "-am \"{$message}\"")->then(function ($result) {
       if (preg_match_all('/nothing to commit, working tree clean/', $result, $matches)) throw new Exception('nothing to commit, working tree clean');
       return $result;
@@ -108,12 +102,16 @@ class Repository {
    */
   public function log () {
     return $this->run('log', '--format=fuller')->then(function ($result) {
-      $commits = [];
-      if (preg_match_all(commit::$regex, $result, $matches))
-      foreach ($matches[0] as $value) {
-        $commits[] = new commit($value);
+      try {
+        $commits = [];
+        if (preg_match_all(commit::$regex, $result, $matches))
+        foreach ($matches[0] as $value) {
+          $commits[] = new commit($value);
+        }
+        return $commits;
+      } catch (\Throwable $th) {
+        throw $th;
       }
-      return $commits;
     });
   }
 
@@ -125,16 +123,20 @@ class Repository {
    */
   public function show (string $commit = '') {
     return $this->run('show', '--format=fuller', $commit)->then(function ($result) {
-      $diffs = [];
-      if (preg_match_all(diff::$regex, $result, $matches))
-      foreach ($matches[0] as $value) {
-        $diffs[] = new diff($value);
-      }
+      try {
+        $diffs = [];
+        if (preg_match_all(diff::$regex, $result, $matches))
+        foreach ($matches[0] as $value) {
+          $diffs[] = new diff($value);
+        }
 
-      return [
-        'commit' => new commit($result),
-        'diffs' => $diffs,
-      ];
+        return [
+          'commit' => new commit($result),
+          'diffs' => $diffs,
+        ];
+      } catch (\Throwable $th) {
+        throw $th;
+      }
     });
   }
 
@@ -173,5 +175,16 @@ class Repository {
     $process->start();
 
     return $process->stdout;
+  }
+
+  public static function echoThrowable () {
+    return function (\Throwable $e) {
+      if($e instanceof Exception) {
+        echo 'Error: '. $e->getMessage().PHP_EOL;
+        return;
+      }
+
+      echo (string) $e.PHP_EOL;
+    };
   }
 }
