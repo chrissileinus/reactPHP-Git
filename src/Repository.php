@@ -1,9 +1,11 @@
 <?php
+
 namespace Chrissileinus\React\Git;
 
 const forceUTF8 = true;
 
-class Repository {
+class Repository
+{
   protected string $repository;
 
   /**
@@ -12,7 +14,8 @@ class Repository {
    * @param  string[]|null $initParams
    * @throws Exception
    */
-  public function __construct (string $repository, array $initParams = null) {
+  public function __construct(string $repository, array $initParams = null)
+  {
     if (basename($repository) === '.git') {
       $repository = dirname($repository);
     }
@@ -28,7 +31,8 @@ class Repository {
     $this->run('init', $initParams);
   }
 
-  public function path () {
+  public function path()
+  {
     return $this->repository;
   }
 
@@ -39,7 +43,8 @@ class Repository {
    * @return \React\Promise\PromiseInterface
    * @throws Exception
    */
-  public function add ($file) {
+  public function add($file)
+  {
     if ($file == "*") {
       return $this->run('add', $file);
     }
@@ -72,7 +77,8 @@ class Repository {
    * @return \React\Promise\PromiseInterface
    * @throws Exception
    */
-  public function commit (string $message, $params = null) {
+  public function commit(string $message, $params = null)
+  {
     return $this->run('commit', $params, "-am \"{$message}\"")->then(function ($result) {
       if (preg_match_all('/nothing to commit, working tree clean/', $result, $matches)) throw new Exception('nothing to commit, working tree clean');
       return $result;
@@ -87,7 +93,8 @@ class Repository {
    * @return \React\Promise\PromiseInterface
    * @throws Exception
    */
-  public function status () {
+  public function status()
+  {
     return $this->run('status', '--short', '--untracked-files no')->then(function ($result) {
       if ($result == '') throw new Exception('nothing to commit, working tree clean');
       return $result;
@@ -100,14 +107,15 @@ class Repository {
    * @return \React\Promise\PromiseInterface|array
    * @throws Exception
    */
-  public function log () {
+  public function log()
+  {
     return $this->run('log', '--format=fuller')->then(function ($result) {
       try {
         $commits = [];
         if (preg_match_all(commit::$regex, $result, $matches))
-        foreach ($matches[0] as $value) {
-          $commits[] = new commit($value);
-        }
+          foreach ($matches[0] as $value) {
+            $commits[] = new commit($value);
+          }
         return $commits;
       } catch (\Throwable $th) {
         throw $th;
@@ -121,14 +129,15 @@ class Repository {
    * @return \React\Promise\PromiseInterface|array
    * @throws Exception
    */
-  public function show (string $commit = '') {
+  public function show(string $commit = '')
+  {
     return $this->run('show', '--format=fuller', $commit)->then(function ($result) {
       try {
         $diffs = [];
         if (preg_match_all(diff::$regex, $result, $matches))
-        foreach ($matches[0] as $value) {
-          $diffs[] = new diff($value);
-        }
+          foreach ($matches[0] as $value) {
+            $diffs[] = new diff($value);
+          }
 
         return [
           'commit' => new commit($result),
@@ -146,7 +155,8 @@ class Repository {
    * @return \React\Promise\PromiseInterface
    * @throws Exception
    */
-  public function run (...$args) {
+  public function run(...$args)
+  {
     $deferred = new \React\Promise\Deferred();
 
     $stdout = $this->runStream(...$args);
@@ -162,13 +172,14 @@ class Repository {
     return $deferred->promise();
   }
 
-    /**
+  /**
    * Runs command an stream the output.
    * @param  string ...$args
    * @return \React\Stream\ReadableStreamInterface
    * @throws Exception
    */
-  public function runStream (...$args) {
+  public function runStream(...$args)
+  {
     $command = 'git ' . helpers::stringifyArgs($args);
 
     $process = new \React\ChildProcess\Process($command, $this->repository);
@@ -177,14 +188,15 @@ class Repository {
     return $process->stdout;
   }
 
-  public static function echoThrowable () {
+  public static function echoThrowable()
+  {
     return function (\Throwable $e) {
-      if($e instanceof Exception) {
-        echo 'Error: '. $e->getMessage().PHP_EOL;
+      if ($e instanceof Exception) {
+        echo 'Error: ' . $e->getMessage() . PHP_EOL;
         return;
       }
 
-      echo (string) $e.PHP_EOL;
+      echo (string) $e . PHP_EOL;
     };
   }
 }
