@@ -10,11 +10,12 @@ class Repository
 
   /**
    * Open or Init repo in directory if it not exist
+   *
    * @param  string $repository
-   * @param  string[]|null $initParams
+   * @param  string ...$initParams
    * @throws Exception
    */
-  public function __construct(string $repository, array $initParams = null)
+  public function __construct(string $repository, string ...$initParams)
   {
     if (basename($repository) === '.git') {
       $repository = dirname($repository);
@@ -28,33 +29,35 @@ class Repository
 
     $this->repository = $repository;
 
-    $this->run('init', $initParams);
+    $this->run('init', ...$initParams);
   }
 
-  public function path()
+  /**
+   * path
+   *
+   * @return string
+   */
+  public function path(): string
   {
     return $this->repository;
   }
 
   /**
    * Adds file(s).
-   * `git add <file>`
-   * @param  string|string[] $file
+   * `git add <...files>`
+   *
+   * @param  string ...$files
    * @return \React\Promise\PromiseInterface
    * @throws Exception
    */
-  public function add($file)
+  public function add(string ...$files): \React\Promise\PromiseInterface
   {
-    if ($file == "*") {
-      return $this->run('add', $file);
-    }
-
-    if (!is_array($file)) {
-      $file = func_get_args();
+    if ($files[0] == "*" || $files[0] == ".") {
+      return $this->run('add', $files[0]);
     }
 
     $promises = [];
-    foreach ($file as $item) {
+    foreach ($files as $item) {
       // make sure the given item exists
       // this can be a file or an directory, git supports both
       $path = helpers::isAbsolute($item) ? $item : ($this->repository . DIRECTORY_SEPARATOR . $item);
@@ -72,14 +75,14 @@ class Repository
   /**
    * commit changes
    * `git commit <params> -m <message>`
+   *
    * @param  string $message
-   * @param  string[] $params  param => value
+   * @param  string ...$params
    * @return \React\Promise\PromiseInterface
-   * @throws Exception
    */
-  public function commit(string $message, $params = null)
+  public function commit(string $message, string ...$params): \React\Promise\PromiseInterface
   {
-    return $this->run('commit', $params, "-am \"{$message}\"")->then(function ($result) {
+    return $this->run('commit', "-am \"{$message}\"", ...$params)->then(function ($result) {
       if (preg_match_all('/nothing to commit, working tree clean/', $result, $matches)) throw new Exception('nothing to commit, working tree clean');
       return $result;
     });
@@ -88,12 +91,10 @@ class Repository
   /**
    * status?
    * `git status`
-   * @param  string $message
-   * @param  string[] $params  param => value
+   *
    * @return \React\Promise\PromiseInterface
-   * @throws Exception
    */
-  public function status()
+  public function status(): \React\Promise\PromiseInterface
   {
     return $this->run('status', '--short', '--untracked-files no')->then(function ($result) {
       if ($result == '') throw new Exception('nothing to commit, working tree clean');
@@ -104,10 +105,10 @@ class Repository
   /**
    * get log command.
    * `git log`
-   * @return \React\Promise\PromiseInterface|array
-   * @throws Exception
+   *
+   * @return \React\Promise\PromiseInterface
    */
-  public function log()
+  public function log(): \React\Promise\PromiseInterface
   {
     return $this->run('log', '--format=fuller')->then(function ($result) {
       try {
@@ -126,10 +127,11 @@ class Repository
   /**
    * show commit.
    * `git show`
-   * @return \React\Promise\PromiseInterface|array
+   *
+   * @return \React\Promise\PromiseInterface
    * @throws Exception
    */
-  public function show(string $commit = '')
+  public function show(string $commit = ''): \React\Promise\PromiseInterface
   {
     return $this->run('show', '--format=fuller', $commit)->then(function ($result) {
       try {
@@ -151,11 +153,12 @@ class Repository
 
   /**
    * Runs command.
+   *
    * @param  string ...$args
    * @return \React\Promise\PromiseInterface
    * @throws Exception
    */
-  public function run(...$args)
+  public function run(...$args): \React\Promise\PromiseInterface
   {
     $deferred = new \React\Promise\Deferred();
 
@@ -173,30 +176,18 @@ class Repository
   }
 
   /**
-   * Runs command an stream the output.
+   * Runs command and stream the output.
+   *
    * @param  string ...$args
    * @return \React\Stream\ReadableStreamInterface
-   * @throws Exception
    */
-  public function runStream(...$args)
+  public function runStream(...$args): \React\Stream\ReadableStreamInterface
   {
-    $command = 'git ' . helpers::stringifyArgs($args);
+    $command = 'git ' . implode(' ', $args);
 
     $process = new \React\ChildProcess\Process($command, $this->repository);
     $process->start();
 
     return $process->stdout;
-  }
-
-  public static function echoThrowable()
-  {
-    return function (\Throwable $e) {
-      if ($e instanceof Exception) {
-        echo 'Error: ' . $e->getMessage() . PHP_EOL;
-        return;
-      }
-
-      echo (string) $e . PHP_EOL;
-    };
   }
 }
