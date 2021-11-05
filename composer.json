@@ -1,6 +1,7 @@
 {
     "name": "chrissileinus/reactphp-git",
-    "description": "a Git Wrapper for reactPHP",
+    "description": "a Git Wrapper for reactPHP ",
+    "license": "MIT",
     "type": "library",
     "require": {
         "react/child-process": "^0.6.4",
