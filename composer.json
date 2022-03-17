@@ -4,6 +4,7 @@
     "license": "MIT",
     "type": "library",
     "require": {
+        "php": ">=8.0",
         "react/child-process": "^0.6.4",
         "react/promise": "^2.8",
         "react/event-loop": "^1.2"
