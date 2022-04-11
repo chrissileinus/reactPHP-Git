@@ -14,6 +14,7 @@ const forceUTF8 = true;
 class Repository
 {
   protected string $repository;
+  protected $onError = null;
 
   /**
    * Open or Init repo in directory if it not exist
@@ -22,7 +23,7 @@ class Repository
    * @param  string ...$initParams
    * @throws Exception
    */
-  public function __construct(string $repository, string ...$initParams)
+  public function __construct(string $repository, callable $onError = null, string ...$initParams)
   {
     if (basename($repository) === '.git') {
       $repository = dirname($repository);
@@ -35,6 +36,7 @@ class Repository
     if ($noDir) user_error("Repository directory created '{$repository}'.");
 
     $this->repository = $repository;
+    $this->onError = $onError;
 
     $this->run('init', ...$initParams);
   }
@@ -194,6 +196,11 @@ class Repository
 
     $process = new \React\ChildProcess\Process($command, $this->repository);
     $process->start();
+
+
+    $process->stderr->on('data', function ($chunk) use ($command) {
+      call_user_func($this->onError, $command . PHP_EOL . $chunk);
+    });
 
     return $process->stdout;
   }
