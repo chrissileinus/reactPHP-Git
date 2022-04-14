@@ -23,7 +23,7 @@ class Repository
    * @param  string ...$initParams
    * @throws Exception
    */
-  public function __construct(string $repository, callable $onError = null, string ...$initParams)
+  public function __construct(string $repository, callable $onError = null, array $gitUser = [], string ...$initParams)
   {
     if (basename($repository) === '.git') {
       $repository = dirname($repository);
@@ -39,6 +39,11 @@ class Repository
     $this->onError = $onError;
 
     $this->run('init', ...$initParams);
+
+    $gitUser['email'] ??= "D1ca@service.local";
+    $gitUser['name'] ??= "D1ca";
+    $this->run('config', "user.email \"{$gitUser['email']}\"");
+    $this->run('config', "user.name \"{$gitUser['name']}\"");
   }
 
   /**
