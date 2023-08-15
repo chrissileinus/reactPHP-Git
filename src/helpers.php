@@ -25,7 +25,10 @@ class helpers
 
   public static function forceToUTF8(string $string)
   {
-    if (forceUTF8 && !\mb_detect_encoding($string, 'UTF-8', true)) return utf8_encode($string);
+    if (forceUTF8 && !\mb_detect_encoding($string, 'UTF-8', true)) {
+      // return utf8_encode($string);
+      return mb_convert_encoding($string, 'UTF-8', 'ISO-8859-1');
+    }
     return $string;
   }
 }
